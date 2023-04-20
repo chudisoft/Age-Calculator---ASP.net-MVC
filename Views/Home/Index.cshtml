@@ -1,0 +1,168 @@
+﻿@*@model IEnumerable<Age_Calculator.Models.Product>*@
+
+@{
+    ViewBag.Title = "Age Calculator";
+}
+
+
+<div class="form pt-3">
+    <div class="col-md-4 border shadow bg-light card pt-3 pb-5 p-2">
+        <div class="card-header mb-3" 
+             style="background-color: #f3f3f3 !important;">
+            <h4>Age Calculator</h4>
+            <p class="text-dark">Enter your date of birth and then proceed to calculate your age.</p>
+        </div>
+        <label class="form-label">Select Date:</label>
+        <div class="input-group pb-2">
+            <input type="date" class="form-control" id="date" />
+        </div>
+        <div class="input-group">
+            <p class="text-primary" id="result">
+            </p>
+        </div>
+        <div class="input-group">
+            <button class="btn btn-primary"
+                    style="color: #ffffff; float: right"
+                    onclick="Calculate(this)">
+                <i class="fas fa-calculator"></i> Calculate
+            </button>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+
+    <script type="text/javascript">
+        $(document).ready(function () {
+            $('input[type=datetime]').datepicker({
+                dateFormat: "dd/M/yy",
+                changeMonth: true,
+                changeYear: true,
+                yearRange: "-100:0",
+                CSSStyleSheet: {
+                    background: "#000"
+                }
+            });
+
+        });
+
+
+        function Calculate(e) {
+            //fetch()
+            var c = e.children[0].className;
+            e.children[0].className = "fa fa-spinner fa-spin"
+
+            var el = document.getElementById("date");
+            var body = { 'dob': el.value };
+            console.log(body);
+
+            fetch("@Url.Action("Calculate")", {
+                method: "post",
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify(body)
+            }).then((response) => {
+                e.children[0].className = c;
+                console.log(response);
+                response.json().then((result) => {
+                    if (response.status >= 200 && response.status < 400) {
+                        if (result['status'] === "success") {
+                            document.getElementById('result').innerText = result['result'];
+                        } else {
+                            alert(result['status']);
+                        }
+                    } else {
+                        return {
+                            "error": 'Invalid Request: ' + response.statusText,
+                            "code": response.status,
+                            "status": response.statusText
+                        };
+                    }
+                })
+            }).catch((error) => {
+                var errM = error.toString().replace("TypeError: ", "")
+                alert("Error: " + errM);
+            })
+
+        }
+        function CalculateOld(e) {
+            //fetch()
+            var c = e.children[0].className;
+            e.children[0].className = "fa fa-spinner fa-spin"
+
+            var el = document.getElementById("date");
+            var body = { 'dob': el.value };
+            console.log(body);
+
+                fetch("@Url.Action("Calculate")", {
+                    method: "post",
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify(body)
+                }).then((response) => {
+                    // if(response.status === 200){
+                    //if (response.redirected === true) {
+                    //    alert("Unautorized");
+                    //    window.location.href = "/Account/Login";
+                    //    return;
+                    //}
+                    console.log(response);
+                    response.json().then((result) => {
+                        if (response.status >= 400 && response.status < 500) {
+                            console.log(result)
+                            if (response.status === 401 || response.status === 403) {
+                                sessionStorage.setItem("redirectUrl", window.location.href);
+                                window.location.href = "/Account/Login";
+                                return;
+                            }
+                            return result;
+                        } else if (response.status >= 200 && response.status < 400) {
+                            if (result['status'] === "unauthorized") {
+                                alert(result['status']);
+                                window.location.href = "/Account/Login";
+                            } else if (result['status'] === "success") {
+                                window.location.href = "/Orders/Checkout";
+                            } else {
+                                alert(result['status']);
+                            }
+                        } else {
+                            return {
+                                "error": 'Invalid Request: ' + response.statusText,
+                                "code": response.status,
+                                "status": response.statusText
+                            };
+                        }
+                    })
+                }).catch((error) => {
+                    var errM = error.toString().replace("TypeError: ", "")
+                    alert("Error: " + errM);
+                    return {
+                        "error": errM,
+                        "code": 0,
+                        "status": errM
+                    };
+                })
+
+            return;
+
+                $.ajax({
+                    url: "@Url.Action("AddToCart")",
+                    type: "POST",
+                    data: JSON.stringify(body),
+                    contentType: "application/json; charset=utf-8",
+                    dataType: "json",
+                    error: function (response) {
+                        alert("Error: " + response.responseText);
+                },
+                    success: function (response) {
+                        alert(response);
+                    }
+                });
+            //}
+        }
+    </script>
+}
